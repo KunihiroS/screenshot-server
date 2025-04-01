@@ -24,6 +24,49 @@ This project is a screenshot server written in Python. It provides the following
 - Pillow library
 - MCP protocol related libraries
 
+
+## WSL2 Setup for Windows Screenshots
+
+If you are running the MCP Host (e.g., the AI assistant client) within WSL2 (like Ubuntu) but want to take screenshots of the Windows host machine, the following setup is required because `pyautogui` needs access to the Windows GUI:
+
+1.  **Copy Project to Windows:**
+    Copy the entire `screenshot-server` project directory from your WSL filesystem (e.g., `/home/user/projects/screenshot-server`) to a location on your Windows filesystem (e.g., `C:\Users\YourUser\projects\screenshot-server`).
+
+2.  **Install Dependencies on Windows:**
+    *   Ensure you have Python and `uv` installed on Windows.
+    *   Open PowerShell or Command Prompt **on Windows**.
+    *   Navigate (`cd`) to the project directory **on Windows** where you copied the files.
+    *   Install the dependencies using `uv`, explicitly specifying your Windows Python executable path:
+        ```powershell
+        # Example using uv, replace paths as needed
+        C:\path\to\your\windows\uv.exe sync -p C:\path\to\your\windows\python.exe
+        ```
+        (You might need to delete the `.venv` folder copied from WSL first if `uv sync` fails: `Remove-Item -Recurse -Force .venv`)
+
+3.  **Configure MCP Host (on WSL):**
+    Modify your MCP client's settings (e.g., `mcp_settings.json` used by the AI assistant) to launch the screenshot server **on Windows** via PowerShell. The MCP Host itself remains running in WSL.
+
+    ```json
+    {
+      "mcpServers": {
+        "Screenshot-server": {
+          "command": "powershell.exe", // Call PowerShell from WSL
+          "args": [
+            "-Command",
+            // Use Invoke-Command for robustness
+            "Invoke-Command -ScriptBlock { cd '<YOUR_WINDOWS_PROJECT_COPY_PATH>'; & '<YOUR_WINDOWS_UV_PATH>' run screenshot.py }"
+            // Example: "Invoke-Command -ScriptBlock { cd 'C:\\Users\\YourUser\\projects\\screenshot-server'; & 'C:\\Users\\YourUser\\.local\\bin\\uv.exe' run screenshot.py }"
+          ]
+        }
+        // ... other servers
+      }
+    }
+    ```
+    *   Replace `<YOUR_WINDOWS_PROJECT_COPY_PATH>` with the actual path where you copied the project on Windows.
+    *   Replace `<YOUR_WINDOWS_UV_PATH>` with the actual path to `uv.exe` on Windows.
+
+This setup allows the WSL-based MCP Host to trigger the screenshot server on the Windows host, enabling `pyautogui` to capture the correct screen.
+
 ## MCP Configuration Example
 
 ```json
