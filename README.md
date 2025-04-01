@@ -18,6 +18,29 @@ This project is a screenshot server written in Python. It provides the following
     ```
 3.  Use an MCP client to call the `take_screenshot_image` tool to get a screenshot.
 
+
+## Available Tools
+
+This server provides the following tools via the MCP protocol:
+
+*   **`take_screenshot()`**
+    *   Description: Takes a screenshot of the user's screen.
+    *   Returns: An MCP `Image` object containing the screenshot data (JPEG format, quality 60).
+    *   Usage: Primarily intended for internal MCP communication where the client expects an `Image` object.
+
+*   **`take_screenshot_image()`**
+    *   Description: Takes a screenshot of the user's screen.
+    *   Returns: An MCP `ImageContent` object, suitable for AI assistants capable of processing image content directly.
+    *   Usage: Recommended tool for AI assistants to visually perceive the user's screen.
+
+*   **`take_screenshot_path(path: str = "./", name: str = "screenshot.jpg")`**
+    *   Description: Takes a screenshot and saves it as a JPEG file to the specified path on the machine where the *server* is running.
+    *   Parameters:
+        *   `path` (string, optional): The directory path where the screenshot file should be saved. Defaults to the server's current working directory (`./`).
+        *   `name` (string, optional): The desired filename for the screenshot. Defaults to `screenshot.jpg`.
+    *   Returns: A string indicating the result: `"success"` or `"failed"` (with details potentially printed to the server's console).
+    *   Usage: Useful for saving screenshots as files for later review or sharing.
+
 ## Dependencies
 
 - Python 3.x
