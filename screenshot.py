@@ -31,15 +31,15 @@ mcp = FastMCP("screenshot server")
 
 @mcp.tool()
 def take_screenshot_path(path: str = "./", name: str = "screenshot.jpg") -> str:
-    """
-    Takes a screenshot and saves it to a specified path and filename on the server machine.
+    """Takes a screenshot and saves it to a specified path and filename.
 
-    This tool provides flexibility in choosing the save location and filename.
+    Provides flexibility in choosing the save location and filename on the server machine.
 
     Args:
         path (str, optional): The directory path to save the screenshot.
-                              Defaults to the server's current working directory.
-        name (str, optional): The filename for the screenshot. Defaults to "screenshot.jpg".
+                              Defaults to the server's current working directory (`./`).
+        name (str, optional): The filename for the screenshot (e.g., "my_capture.jpg").
+                              Defaults to "screenshot.jpg".
 
     Returns:
         str: "success" if saved successfully, otherwise "failed: [error message]".
@@ -83,19 +83,21 @@ def take_screenshot_path(path: str = "./", name: str = "screenshot.jpg") -> str:
 @mcp.tool()
 # Add optional 'name' argument with default
 def take_screenshot_and_return_path(name: str = "latest_screenshot.jpg") -> str:
-    """
-    Takes a screenshot, saves it to the 'images' directory with the specified filename,
-    and returns the absolute path to the saved file.
+    """Takes a screenshot, saves it to images/ directory, and returns the absolute path.
+
+    Saves the screenshot with the specified filename within the 'images' subdirectory
+    relative to the server's execution directory. This is the primary tool for
+    workflows requiring the file path for subsequent processing.
 
     Args:
-        name (str, optional): The filename for the screenshot.
+        name (str, optional): The filename for the screenshot (e.g., "current_view.jpg").
                               Defaults to "latest_screenshot.jpg".
 
     Returns:
         str: The absolute path (e.g., Windows path like C:\\...) to the saved screenshot file,
              or "failed: [error message]" if an error occurs.
     """
-    logger.info("take_screenshot_and_return_path called")
+    logger.info(f"take_screenshot_and_return_path called with name='{name}'") # Log the name used
     buffer = io.BytesIO()
     try:
         # Capture the screenshot
