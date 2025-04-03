@@ -159,21 +159,42 @@ def save_screenshot_to_host_workspace(host_workspace_path: str, name: str = "wor
     logger.info(f"save_screenshot_to_host_workspace called with host_path='{host_workspace_path}', name='{name}'")
     buffer = io.BytesIO()
     try:
-        # --- Convert WSL path to UNC path ---
-        # Basic conversion assuming common WSL structure.
-        # Assumes the distro name is 'Ubuntu-22.04'. This might need adjustment
-        # for different setups or could be made configurable via env var or another tool arg.
+        # --- Convert WSL path to UNC path (with auto-detection attempt) ---
         if host_workspace_path.startswith('/'):
-            # Using \\wsl$ as it's generally more reliable
-            # IMPORTANT: Ensure the Distro name 'Ubuntu-22.04' matches the user's setup!
-            distro_name = "Ubuntu-22.04" # Consider making this configurable
-            unc_path_base = f"\\\\wsl$\\{distro_name}"
-            # Join UNC base with the rest of the path (stripping leading '/')
-            # Replace forward slashes with backslashes for Windows path compatibility
-            windows_compatible_wsl_path = host_workspace_path.lstrip('/').replace('/', '\\')
-            unc_save_dir = os.path.join(unc_path_base, windows_compatible_wsl_path)
-            save_path_obj = Path(unc_save_dir) / name
-            logger.info(f"Attempting to save to UNC path: {save_path_obj}")
+            distro_name = None
+            try:
+                import subprocess
+                # Try to get the default WSL distribution name quietly
+                result = subprocess.run(['wsl', '-l', '-q'], capture_output=True, text=True, check=True, encoding='utf-16le') # Use utf-16le for wsl output on Windows
+                # Get the first line of the output, remove potential trailing "(Default)" and strip whitespace
+                lines = result.stdout.strip().splitlines()
+                if lines:
+                    distro_name = lines[0].replace('(Default)', '').strip()
+                    logger.info(f"Auto-detected WSL distribution: {distro_name}")
+                else:
+                    logger.warning("Could not auto-detect WSL distribution name from 'wsl -l -q'. Falling back to default.")
+                    # Fallback to a common default if detection fails
+                    distro_name = "Ubuntu-22.04"
+
+            except FileNotFoundError:
+                logger.error("'wsl.exe' command not found. Cannot auto-detect distribution. Falling back.")
+                distro_name = "Ubuntu-22.04" # Fallback
+            except subprocess.CalledProcessError as e:
+                logger.error(f"Error running 'wsl -l -q': {e}. Falling back.")
+                distro_name = "Ubuntu-22.04" # Fallback
+            except Exception as e:
+                 logger.error(f"Unexpected error during WSL distro detection: {e}. Falling back.")
+                 distro_name = "Ubuntu-22.04" # Fallback
+
+            if distro_name:
+                unc_path_base = f"\\\\wsl$\\{distro_name}"
+                windows_compatible_wsl_path = host_workspace_path.lstrip('/').replace('/', '\\')
+                unc_save_dir = os.path.join(unc_path_base, windows_compatible_wsl_path)
+                save_path_obj = Path(unc_save_dir) / name
+                logger.info(f"Attempting to save to UNC path: {save_path_obj}")
+            else:
+                 logger.error("Failed to determine WSL distribution name.")
+                 return "failed: could not determine WSL distribution"
         else:
             logger.error(f"Invalid WSL path provided: '{host_workspace_path}'. Path must start with '/'.")
             return "failed: invalid WSL path format"
