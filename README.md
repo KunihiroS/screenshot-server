@@ -25,31 +25,28 @@ Directly interpreting screenshot image data sent via MCP by AI assistants proved
 
 ## Available Tools
 
-This server currently offers the following tools:
+This server provides the following tools, ordered by recommended usage:
 
 *   **`save_screenshot_to_host_workspace(host_workspace_path: str, name: str = "workspace_screenshot.jpg")`**
-    *   **Primary Use:** The **recommended** tool for saving screenshots directly into the AI Assistant's (Host's) WSL workspace, simplifying workflows.
-    *   **Action:** Takes a screenshot and saves it to the specified Host's WSL workspace path. The server handles the conversion from WSL path to UNC path for saving. It automatically attempts to detect the WSL distribution name.
+    *   **Recommended Use:** Saves a screenshot directly into the AI Assistant's (Host's) current WSL workspace. This is the preferred method for seamless integration.
+    *   **Action:** Takes a screenshot, converts the provided WSL path to a UNC path, and saves the file to the Host's workspace. Automatically detects the WSL distribution name.
     *   **Args:**
-        *   `host_workspace_path` (str): The absolute WSL path of the Host's workspace (e.g., `/home/user/project`). **Must start with `/`**.
-        *   `name` (str, optional): The desired filename for the screenshot. Defaults to `workspace_screenshot.jpg`.
+        *   `host_workspace_path` (str): The absolute WSL path of the Host's workspace (e.g., `/home/user/project`).
+        *   `name` (str, optional): Filename. Defaults to `workspace_screenshot.jpg`.
     *   **Returns:** `str` - `"success"` or `"failed: [error message]"`.
 
 *   **`take_screenshot_and_return_path(name: str = "latest_screenshot.jpg")`**
-    *   **Primary Use:** When saving to a fixed location *relative to the server* is acceptable, and the Host needs the absolute path for further processing.
-    *   **Action:** Takes a screenshot, saves it to the `images/` subdirectory (relative to where the server script is running) with the specified filename, and returns the absolute path of the saved file.
+    *   **Use Case:** Saves a screenshot to a fixed `images/` directory relative to the server's location and returns the absolute path (typically a Windows path). Useful if the caller needs the path for external processing.
     *   **Args:**
-        *   `name` (str, optional): The filename for the screenshot. Defaults to `latest_screenshot.jpg`.
-    *   **Returns:** `str` - The absolute path (e.g., a Windows path like `C:\...`) or `"failed: [error message]"`.
+        *   `name` (str, optional): Filename. Defaults to `latest_screenshot.jpg`.
+    *   **Returns:** `str` - Absolute path or `"failed: [error message]"`.
 
 *   **`take_screenshot_path(path: str = "./", name: str = "screenshot.jpg")`**
-    *   **Primary Use:** When maximum flexibility in specifying the save location (on the server machine) and filename is needed. Requires careful path handling by the caller, especially in WSL scenarios.
-    *   **Action:** Takes a screenshot and saves it to the location specified by the `path` and `name` arguments on the server machine.
+    *   **Use Case:** Saves a screenshot to an arbitrary location specified by a Windows path or a UNC path (e.g., for saving outside the Host's workspace). Requires careful path specification by the caller.
     *   **Args:**
-        *   `path` (str, optional): The **Windows path** (or UNC path to WSL, e.g., `\\\\wsl$\\Distro\\...`) where the server should save the screenshot directory. Defaults to the server's working directory.
-        *   `name` (str, optional): The filename. Defaults to `screenshot.jpg`.
+        *   `path` (str, optional): Target directory (Windows or UNC path). Defaults to server's working directory.
+        *   `name` (str, optional): Filename. Defaults to `screenshot.jpg`.
     *   **Returns:** `str` - `"success"` or `"failed: [error message]"`.
-
 ## Setup and Usage
 
 ### 1. Prerequisites
@@ -81,7 +78,6 @@ This server is typically launched *by* an MCP Host based on its configuration.
           "args": [
             "-Command",
             "Invoke-Command -ScriptBlock { cd '<YOUR_WINDOWS_PROJECT_PATH>'; & '<YOUR_WINDOWS_UV_PATH>' run screenshot.py }"
-            // Example: "Invoke-Command -ScriptBlock { cd 'C:\\Users\\KUNI\\dev\\mcp_servers\\screenshot-server'; & 'C:\\Users\\KUNI\\.local\\bin\\uv.exe' run screenshot.py }"
           ]
         }
         // ... other servers ...
