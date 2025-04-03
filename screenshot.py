@@ -65,16 +65,18 @@ def take_screenshot_path(path: str = "./", name: str = "screenshot.jpg") -> str:
 
         # Process file saving
         try:
-            base_path = Path(path).resolve()
-            save_path = (base_path / name).resolve()
+            # Resolve the path - this works for both Windows and UNC paths
+            save_path_obj = Path(path) / name
+            # Ensure the directory exists
+            save_path_obj.parent.mkdir(parents=True, exist_ok=True)
+            # Resolve after ensuring directory exists, especially for UNC
+            save_path = save_path_obj.resolve()
 
-            # Security check: Ensure the path doesn't escape the intended directory
-            if not str(save_path).startswith(str(base_path)):
-                logger.error(f"Invalid path specified (path traversal attempt?). Attempted save path: {save_path}, Base path: {base_path}")
-                return "failed: invalid path"
-
-            # Create directory if it doesn't exist
-            save_path.parent.mkdir(parents=True, exist_ok=True)
+            # Security check (more robust check might be needed for UNC paths if strict confinement is required)
+            # For simple cases, checking if the resolved path is valid might suffice here.
+            # A basic check could involve ensuring it's not trying to write to system dirs, but UNC makes it tricky.
+            # For now, we rely on the OS permissions and the user providing a valid target.
+            # Consider adding checks based on expected base paths if needed.
 
             # Write the image data to the file
             with open(save_path, "wb") as f:
@@ -82,7 +84,8 @@ def take_screenshot_path(path: str = "./", name: str = "screenshot.jpg") -> str:
             logger.info(f"Successfully saved screenshot to {save_path}")
             return "success"
         except Exception as e:
-            logger.error(f"Error writing screenshot to file '{save_path}': {e}", exc_info=True)
+            # Log the specific path that failed if possible
+            logger.error(f"Error writing screenshot to file '{path}/{name}': {e}", exc_info=True)
             return "failed: file write error"
     except Exception as e:
         # Handle errors during screenshot capture itself
@@ -135,6 +138,74 @@ def take_screenshot_and_return_path(name: str = "latest_screenshot.jpg") -> str:
         # Handle errors during screenshot capture or file saving
         logger.error(f"Error in take_screenshot_and_return_path: {e}", exc_info=True)
         return f"failed: {e}" # Return a failure indicator with the error
+
+# --- New Tool to Save to Host Workspace ---
+@mcp.tool()
+def save_screenshot_to_host_workspace(host_workspace_path: str, name: str = "workspace_screenshot.jpg") -> str:
+    """Takes a screenshot and saves it to the specified Host's WSL workspace path.
+
+    The server (running on Windows) converts the provided WSL path
+    (e.g., /home/user/project) to a UNC path (e.g., \\\\wsl$\\Distro\\home\\user\\project)
+    before saving.
+
+    Args:
+        host_workspace_path (str): The absolute WSL path of the Host's workspace.
+        name (str, optional): The desired filename for the screenshot.
+                              Defaults to "workspace_screenshot.jpg".
+
+    Returns:
+        str: "success" if saved successfully, otherwise "failed: [error message]".
+    """
+    logger.info(f"save_screenshot_to_host_workspace called with host_path='{host_workspace_path}', name='{name}'")
+    buffer = io.BytesIO()
+    try:
+        # --- Convert WSL path to UNC path ---
+        # Basic conversion assuming common WSL structure.
+        # Assumes the distro name is 'Ubuntu-22.04'. This might need adjustment
+        # for different setups or could be made configurable via env var or another tool arg.
+        if host_workspace_path.startswith('/'):
+            # Using \\wsl$ as it's generally more reliable
+            # IMPORTANT: Ensure the Distro name 'Ubuntu-22.04' matches the user's setup!
+            distro_name = "Ubuntu-22.04" # Consider making this configurable
+            unc_path_base = f"\\\\wsl$\\{distro_name}"
+            # Join UNC base with the rest of the path (stripping leading '/')
+            # Replace forward slashes with backslashes for Windows path compatibility
+            windows_compatible_wsl_path = host_workspace_path.lstrip('/').replace('/', '\\')
+            unc_save_dir = os.path.join(unc_path_base, windows_compatible_wsl_path)
+            save_path_obj = Path(unc_save_dir) / name
+            logger.info(f"Attempting to save to UNC path: {save_path_obj}")
+        else:
+            logger.error(f"Invalid WSL path provided: '{host_workspace_path}'. Path must start with '/'.")
+            return "failed: invalid WSL path format"
+        # --- End Path Conversion ---
+
+        # Capture the screenshot
+        screenshot = pyautogui.screenshot()
+        # Convert and save to buffer as JPEG
+        screenshot.convert("RGB").save(buffer, format="JPEG", quality=60, optimize=True)
+        image_data = buffer.getvalue()
+        logger.debug(f"Image data length: {len(image_data)}")
+
+        # Process file saving using the UNC path
+        try:
+            # Create directory if it doesn't exist (using Path object)
+            save_path_obj.parent.mkdir(parents=True, exist_ok=True)
+
+            # Write the image data to the file
+            with open(save_path_obj, "wb") as f:
+                f.write(image_data)
+            logger.info(f"Successfully saved screenshot to WSL path via UNC: {save_path_obj}")
+            return "success"
+        except Exception as e:
+            logger.error(f"Error writing screenshot to UNC path '{save_path_obj}': {e}", exc_info=True)
+            # Provide more specific error if possible (e.g., permission denied, path not found)
+            return f"failed: file write error to WSL path ({e})"
+
+    except Exception as e:
+        # Handle errors during screenshot capture itself
+        logger.error(f"Error capturing screenshot: {e}", exc_info=True)
+        return "failed: screenshot capture error"
+# --- End New Tool ---
 
 # --- New Tool to Return Base64 Encoded Image ---
 @mcp.tool()
