@@ -81,13 +81,15 @@ def take_screenshot_path(path: str = "./", name: str = "screenshot.jpg") -> str:
         return "failed: screenshot capture error"
 
 @mcp.tool()
-def take_screenshot_and_return_path() -> str:
+# Add optional 'name' argument with default
+def take_screenshot_and_return_path(name: str = "latest_screenshot.jpg") -> str:
     """
-    Takes a screenshot, saves it to a fixed location (images/latest_screenshot.jpg),
+    Takes a screenshot, saves it to the 'images' directory with the specified filename,
     and returns the absolute path to the saved file.
 
-    This is the primary tool intended for workflows where another process or MCP server
-    needs to access the screenshot file using its path (e.g., for image analysis).
+    Args:
+        name (str, optional): The filename for the screenshot.
+                              Defaults to "latest_screenshot.jpg".
 
     Returns:
         str: The absolute path (e.g., Windows path like C:\\...) to the saved screenshot file,
@@ -105,9 +107,9 @@ def take_screenshot_and_return_path() -> str:
 
         # Define the fixed save location relative to the script's execution directory
         save_dir = Path("images")
-        save_filename = "latest_screenshot.jpg"
+        # Use the provided 'name' argument for the filename
         # Resolve to get the absolute path where the server is running
-        save_path = (save_dir / save_filename).resolve()
+        save_path = (save_dir / name).resolve() # Use 'name' argument
 
         # Create the 'images' directory if it doesn't exist
         save_dir.mkdir(parents=True, exist_ok=True)
