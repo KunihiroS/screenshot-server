@@ -228,40 +228,7 @@ def save_screenshot_to_host_workspace(host_workspace_path: str, name: str = "wor
         return "failed: screenshot capture error"
 # --- End New Tool ---
 
-# --- New Tool to Return Base64 Encoded Image ---
-@mcp.tool()
-def take_screenshot_and_return_base64() -> str:
-    """Takes a screenshot and returns the image data as a Base64 encoded string.
-
-    This allows the MCP Host (like an AI assistant) to potentially receive
-    the image data directly for processing, compatible with APIs like Gemini.
-
-    Returns:
-        str: A Base64 encoded string representing the JPEG image,
-             or a string starting with "failed: " on error.
-    """
-    logger.info("take_screenshot_and_return_base64 called")
-    buffer = io.BytesIO()
-    try:
-        # Capture the screenshot
-        screenshot = pyautogui.screenshot()
-        # Convert and save to buffer as JPEG
-        screenshot.convert("RGB").save(buffer, format="JPEG", quality=60, optimize=True)
-        image_data_bytes = buffer.getvalue()
-        logger.debug(f"Image data length (bytes): {len(image_data_bytes)}")
-
-        # Encode the byte data to Base64
-        base64_encoded_data = base64.b64encode(image_data_bytes)
-        # Decode the base64 bytes into a UTF-8 string for returning
-        base64_string = base64_encoded_data.decode('utf-8')
-        logger.info(f"Returning Base64 encoded string (length: {len(base64_string)} chars)")
-
-        return base64_string
-
-    except Exception as e:
-        logger.error(f"Error in take_screenshot_and_return_base64: {e}", exc_info=True)
-        return f"failed: {e}" # Return error message
-# --- End New Tool ---
+# --- Tool take_screenshot_and_return_base64 removed as direct interpretation was problematic ---
 
 # Removed take_screenshot_and_create_resource as resource handling in mcp library was unclear
 
