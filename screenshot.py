@@ -32,22 +32,15 @@ mcp = FastMCP("screenshot server")
 
 @mcp.tool()
 def take_screenshot_path(path: str = "./", name: str = "screenshot.jpg") -> str:
-    """Takes a screenshot and saves it to a specified path and filename.
+    """Takes a screenshot and saves it to a specified path and filename on the server machine.
 
-    Provides flexibility in choosing the save location and filename on the server machine.
-
-    **AI Assistant Usage Guideline:**
-    - **Always ask the user for the desired save path and filename before using this tool.**
-    - If the user says "save it here" or "save to the current workspace", ask for the explicit, absolute path.
-    - For WSL environments where the Host is in WSL and the server is on Windows:
-        - If the user provides a WSL path (e.g., /home/user/...), convert it to the corresponding Windows UNC path (e.g., \\\\wsl$\\DistroName\\home\\user\\...) before passing it to the 'path' argument.
-        - If the user provides a Windows path (e.g., C:\\Users\\...), pass it directly.
-    - Use the 'name' argument for the desired filename.
+    Provides flexibility for saving to specific Windows locations or WSL locations via UNC paths.
+    For saving directly to the Host's WSL workspace, prefer using 'save_screenshot_to_host_workspace'.
 
     Args:
-        path (str, optional): The **Windows path** (or UNC path to WSL) where the server should save the screenshot directory.
+        path (str, optional): The target directory path (Windows path or UNC path like \\\\wsl$\\Distro\\...).
                               Defaults to the server's current working directory (`./`).
-        name (str, optional): The filename for the screenshot (e.g., "my_capture.jpg").
+        name (str, optional): The desired filename for the screenshot.
                               Defaults to "screenshot.jpg".
 
     Returns:
