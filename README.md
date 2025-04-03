@@ -63,10 +63,8 @@ This server is typically launched *by* an MCP Host (like an AI assistant client)
             "-Command",
             // Command executed by PowerShell: Change dir, then run server with uv
             "Invoke-Command -ScriptBlock { cd '<YOUR_WINDOWS_PROJECT_PATH>'; & '<YOUR_WINDOWS_UV_PATH>' run screenshot.py }"
-            // Example: "Invoke-Command -ScriptBlock { cd 'C:\\Users\\KUNI\\dev\\mcp_servers\\screenshot-server'; & 'C:\\Users\\KUNI\\.local\\bin\\uv.exe' run screenshot.py }"
           ]
         }
-        // ... other server configurations ...
       }
     }
     ```
